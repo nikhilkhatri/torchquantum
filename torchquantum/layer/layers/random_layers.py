@@ -29,7 +29,6 @@ import torchquantum.functional as tqf
 import numpy as np
 
 from typing import Iterable
-from torchquantum.plugin.qiskit import QISKIT_INCOMPATIBLE_FUNC_NAMES
 from torchpack.utils.logging import logger
 
 __all__ = [
@@ -129,14 +128,8 @@ class RandomLayer(tq.QuantumModule):
 
         if qiskit_compatible:
             for op_type, op_ratio in zip(op_types, op_ratios):
-                if op_type().name.lower() in QISKIT_INCOMPATIBLE_FUNC_NAMES:
-                    logger.warning(
-                        f"Remove {op_type} from op_types to make "
-                        f"the layer qiskit-compatible."
-                    )
-                else:
-                    op_types_valid.append(op_type)
-                    op_ratios_valid.append(op_ratio)
+                op_types_valid.append(op_type)
+                op_ratios_valid.append(op_ratio)
         else:
             op_types_valid = op_types
             op_ratios_valid = op_ratios

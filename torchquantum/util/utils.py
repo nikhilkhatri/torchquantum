@@ -30,9 +30,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from opt_einsum import contract
-from qiskit_ibm_runtime import QiskitRuntimeService
-from qiskit.exceptions import QiskitError
-from qiskit.providers.aer.noise.device.parameters import gate_error_values
 from torchpack.utils.config import Config
 from torchpack.utils.logging import logger
 
@@ -60,14 +57,10 @@ __all__ = [
     "find_global_phase",
     "build_module_op_list",
     "build_module_from_op_list",
-    "build_module_description_test",
     "get_p_v_reg_mapping",
     "get_p_c_reg_mapping",
     "get_v_c_reg_mapping",
     "get_cared_configs",
-    "get_success_rate",
-    "get_provider",
-    "get_provider_hub_group_project",
     "normalize_statevector",
     "get_circ_stats",
     "partial_trace",
@@ -504,55 +497,6 @@ def build_module_from_op_list(
     return tq.QuantumModuleFromOps(ops)
 
 
-def build_module_description_test():
-    """
-        Test function for building module descriptions.
-
-        This function demonstrates the usage of `build_module_op_list` and `build_module_from_op_list`
-        functions to build module descriptions and create quantum modules from those descriptions.
-
-        Example:
-            import pdb
-            from torchquantum.plugins import tq2qiskit
-            from examples.core.models.q_models import QFCModel12
-
-            pdb.set_trace()
-            q_model = QFCModel12({"n_blocks": 4})
-            desc = build_module_op_list(q_model.q_layer)
-            print(desc)
-            q_dev = tq.QuantumDevice(n_wires=4)
-            m = build_module_from_op_list(desc)
-            tq2qiskit(q_dev, m, draw=True)
-
-            desc = build_module_op_list(
-                tq.RandomLayerAllTypes(n_ops=200, wires=[0, 1, 2, 3], qiskit_compatible=True)
-            )
-            print(desc)
-            m1 = build_module_from_op_list(desc)
-            tq2qiskit(q_dev, m1, draw=True)
-        """
-    import pdb
-
-    from torchquantum.plugin import tq2qiskit
-
-    pdb.set_trace()
-    from examples.core.models.q_models import QFCModel12
-
-    q_model = QFCModel12({"n_blocks": 4})
-    desc = build_module_op_list(q_model.q_layer)
-    print(desc)
-    q_dev = tq.QuantumDevice(n_wires=4)
-    m = build_module_from_op_list(desc)
-    tq2qiskit(q_dev, m, draw=True)
-
-    desc = build_module_op_list(
-        tq.RandomLayerAllTypes(n_ops=200, wires=[0, 1, 2, 3], qiskit_compatible=True)
-    )
-    print(desc)
-    m1 = build_module_from_op_list(desc)
-    tq2qiskit(q_dev, m1, draw=True)
-
-
 def get_p_v_reg_mapping(circ):
     """
     p are physical qubits
@@ -703,87 +647,6 @@ def get_cared_configs(conf, mode) -> Config:
 
     return conf
 
-
-def get_success_rate(properties, transpiled_circ):
-    """
-        Estimate the success rate of a transpiled quantum circuit.
-
-        Args:
-            properties (list): List of gate error properties.
-            transpiled_circ (QuantumCircuit): The transpiled quantum circuit.
-
-        Returns:
-            float: The estimated success rate.
-        """
-    # estimate the success rate according to the error rates of single and
-    # two-qubit gates in transpiled circuits
-
-    gate_errors = gate_error_values(properties)
-    # construct the error dict
-    gate_error_dict = {}
-    for gate_error in gate_errors:
-        if gate_error[0] not in gate_error_dict.keys():
-            gate_error_dict[gate_error[0]] = {tuple(gate_error[1]): gate_error[2]}
-        else:
-            gate_error_dict[gate_error[0]][tuple(gate_error[1])] = gate_error[2]
-
-    success_rate = 1
-    for gate in transpiled_circ.data:
-        gate_success_rate = (
-            1 - gate_error_dict[gate[0].name][tuple(map(lambda x: x.index, gate[1]))]
-        )
-        if gate_success_rate == 0:
-            gate_success_rate = 1e-5
-        success_rate *= gate_success_rate
-
-    return success_rate
-
-def get_provider(backend_name, hub=None):
-    """
-        Get the provider object for a specific backend from IBM Quantum.
-
-        Args:
-            backend_name (str): Name of the backend.
-            hub (str): Optional hub name.
-
-        Returns:
-            IBMQProvider: The provider object.
-        """
-    # mass-inst-tech-1 or MIT-1
-    if backend_name in ["ibmq_casablanca", "ibmq_rome", "ibmq_bogota", "ibmq_jakarta"]:
-        if hub == "mass" or hub is None:
-            provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q-research/mass-inst-tech-1/main")
-        elif hub == "mit":
-            provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q-research/MIT-1/main")
-        else:
-            raise ValueError(f"not supported backend {backend_name} in hub " f"{hub}")
-    elif backend_name in [
-        "ibmq_paris",
-        "ibmq_toronto",
-        "ibmq_manhattan",
-        "ibmq_guadalupe",
-        "ibmq_montreal",
-    ]:
-        provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q-ornl/anl/csc428")
-    else:
-        if hub == "mass" or hub is None:
-            try:
-                provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q-research/mass-inst-tech-1/main")
-            except QiskitError:
-                # logger.warning(f"Cannot use MIT backend, roll back to open")
-                logger.warning(f"Use the open backend")
-                provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q/open/main")
-        elif hub == "mit":
-            provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q-research/MIT-1/main")
-        else:
-            provider = QiskitRuntimeService(channel = "ibm_quantum", instance = "ibm-q/open/main")
-
-    return provider
-
-
-def get_provider_hub_group_project(hub="ibm-q", group="open", project="main"):
-    provider = QiskitRuntimeService(channel = "ibm_quantum", instance = f"{hub}/{group}/{project}")
-    return provider
 
 
 def normalize_statevector(states):
