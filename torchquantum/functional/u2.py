@@ -74,6 +74,7 @@ def cu2_matrix(params):
 _u2_mat_dict = {
     "u2": u2_matrix,
     "cu2": cu2_matrix,
+    "u1q": u1q_matrix,
 }
 
 
@@ -156,6 +157,79 @@ def cu2(
 
     """
     name = "cu2"
+    mat = mat_dict[name]
+    gate_wrapper(
+        name=name,
+        mat=mat,
+        method=comp_method,
+        q_device=q_device,
+        wires=wires,
+        params=params,
+        n_wires=n_wires,
+        static=static,
+        parent_graph=parent_graph,
+        inverse=inverse,
+    )
+
+
+def u1q_matrix(params):
+    """Compute unitary matrix for U_{1q} gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
+
+    theta = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
+    phi = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
+
+    co = torch.cos(theta / 2)
+    si = torch.sin(theta / 2)
+
+    return torch.stack(
+        [
+            torch.cat([co, -1j * torch.exp(-1j * phi) * si], dim=-1),
+            torch.cat([-1j * torch.exp(1j * phi) * si, co], dim=-1),
+        ],
+        dim=-2,
+    ).squeeze(0)
+
+
+def u1q(
+    q_device,
+    wires,
+    params=None,
+    n_wires=None,
+    static=False,
+    parent_graph=None,
+    inverse=False,
+    comp_method="bmm",
+):
+    """Perform the u_{1q} gate.
+
+    Args:
+        q_device (tq.QuantumDevice): The QuantumDevice.
+        wires (Union[List[int], int]): Which qubit(s) to apply the gate.
+        params (torch.Tensor, optional): Parameters (if any) of the gate.
+            Default to None.
+        n_wires (int, optional): Number of qubits the gate is applied to.
+            Default to None.
+        static (bool, optional): Whether use static mode computation.
+            Default to False.
+        parent_graph (tq.QuantumGraph, optional): Parent QuantumGraph of
+            current operation. Default to None.
+        inverse (bool, optional): Whether inverse the gate. Default to False.
+        comp_method (bool, optional): Use 'bmm' or 'einsum' method to perform
+        matrix vector multiplication. Default to 'bmm'.
+
+    Returns:
+        None.
+
+    """
+    name = "u1q"
     mat = mat_dict[name]
     gate_wrapper(
         name=name,
