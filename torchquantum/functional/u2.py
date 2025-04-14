@@ -71,6 +71,32 @@ def cu2_matrix(params):
     return matrix.squeeze(0)
 
 
+def u1q_matrix(params):
+    """Compute unitary matrix for U_{1q} gate.
+
+    Args:
+        params (torch.Tensor): The rotation angle.
+
+    Returns:
+        torch.Tensor: The computed unitary matrix.
+
+    """
+
+    theta = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
+    phi = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
+
+    co = torch.cos(theta / 2)
+    si = torch.sin(theta / 2)
+
+    return torch.stack(
+        [
+            torch.cat([co, -1j * torch.exp(-1j * phi) * si], dim=-1),
+            torch.cat([-1j * torch.exp(1j * phi) * si, co], dim=-1),
+        ],
+        dim=-2,
+    ).squeeze(0)
+
+
 _u2_mat_dict = {
     "u2": u2_matrix,
     "cu2": cu2_matrix,
@@ -172,32 +198,6 @@ def cu2(
     )
 
 
-def u1q_matrix(params):
-    """Compute unitary matrix for U_{1q} gate.
-
-    Args:
-        params (torch.Tensor): The rotation angle.
-
-    Returns:
-        torch.Tensor: The computed unitary matrix.
-
-    """
-
-    theta = params[:, 0].unsqueeze(dim=-1).type(C_DTYPE)
-    phi = params[:, 1].unsqueeze(dim=-1).type(C_DTYPE)
-
-    co = torch.cos(theta / 2)
-    si = torch.sin(theta / 2)
-
-    return torch.stack(
-        [
-            torch.cat([co, -1j * torch.exp(-1j * phi) * si], dim=-1),
-            torch.cat([-1j * torch.exp(1j * phi) * si, co], dim=-1),
-        ],
-        dim=-2,
-    ).squeeze(0)
-
-
 def u1q(
     q_device,
     wires,
@@ -230,7 +230,7 @@ def u1q(
 
     """
     name = "u1q"
-    mat = mat_dict[name]
+    mat = _u2_mat_dict[name]
     gate_wrapper(
         name=name,
         mat=mat,
