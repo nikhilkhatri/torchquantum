@@ -31,3 +31,16 @@ class CU2(Operation, metaclass=ABCMeta):
     @classmethod
     def _matrix(cls, params):
         return tqf.cu2_matrix(params)
+
+
+class U1Q(Operation, metaclass=ABCMeta):
+    """Class for U1Q gate."""
+
+    num_params = 2
+    num_wires = 1
+    op_name = "u1q"
+    func = staticmethod(tqf.u2)
+
+    @classmethod
+    def _matrix(cls, params):
+        return tqf.u1q_matrix(params)

@@ -47,7 +47,7 @@ from .reset import reset
 from .xx_min_yy import xxminyy, xxminyy_matrix, _xxminyy_mat_dict
 from .xx_plus_yy import xxplusyy, xxplusyy_matrix, _xxplusyy_mat_dict
 from .u1 import u1, cu1, u1_matrix, cu1_matrix, _u1_mat_dict, cp, cr, cphase
-from .u2 import u2, cu2, u2_matrix, cu2_matrix, _u2_mat_dict
+from .u2 import u1q, u2, cu2, u1q_matrix, u2_matrix, cu2_matrix, _u2_mat_dict
 from .u3 import u, u3, cu3, cu, cu_matrix, u3_matrix, cu3_matrix, _u3_mat_dict
 from .qubit_unitary import (
     qubitunitary,
@@ -161,6 +161,7 @@ func_name_dict = {
     "crz": crz,
     "crot": crot,
     "u1": u1,
+    "u1q": u1q,
     "u2": u2,
     "u3": u3,
     "u": u,
