@@ -49,7 +49,7 @@ from .swap import SWAP, SSWAP, CSWAP
 from .sx import SX, CSX, C3SX, SXDG
 from .t import T, TDG
 from .u1 import U1, CU1
-from .u2 import U2, CU2
+from .u2 import U2, CU2, U1Q
 from .u3 import U3, CU3, CU, U
 from .xx_min_yy import XXMINYY
 from .xx_plus_yy import XXPLUSYY
@@ -117,6 +117,7 @@ all_variables = [
     TrainableUnitaryStrict,
     U1,
     CU1,
+    U1Q,
     U2,
     CU2,
     U3,
